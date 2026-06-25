@@ -1,16 +1,53 @@
-# React + Vite
+# Hamzaoui Moetez — Portfolio
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Personal portfolio website built with React, Vite, Three.js and Tailwind CSS.
 
-Currently, two official plugins are available:
+## Screenshots
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+![Hero](screenshots/hero.png)
 
-## React Compiler
+![About](screenshots/about.png)
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## Tech Stack
 
-## Expanding the ESLint configuration
+- **Frontend:** React.js, Tailwind CSS, Three.js / React Three Fiber
+- **Build:** Vite
+- **Backend:** Node.js, Express.js (contact form)
+- **Deployment:** Docker-ready
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## Features
+
+- Interactive 3D desktop PC model in the hero section
+- Animated stars background
+- Sections: About, Skills, Experience, Projects, Certifications, Contact
+- Downloadable CV (EN / FR)
+- Contact form with email delivery via Nodemailer
+
+## Getting Started
+
+```bash
+npm install
+npm run dev
+```
+
+To run the contact form backend:
+
+```bash
+cd server
+node index.js
+```
+
+Create a `.env` file at the root with:
+
+```
+GMAIL_USER=your@gmail.com
+GMAIL_APP_PASSWORD=your_app_password
+SERVER_PORT=5000
+VITE_API_URL=http://localhost:5000
+```
+
+## Contact
+
+- Email: hamzaouii.moetez@gmail.com
+- LinkedIn: [linkedin.com/in/hamzaoui-moetez](https://linkedin.com/in/hamzaoui-moetez)
+- GitHub: [github.com/HMotez](https://github.com/HMotez)
