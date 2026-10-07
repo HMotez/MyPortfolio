@@ -98,6 +98,7 @@ const en = {
   "projects.desc": "A selection of projects I've engineered — from AI systems to enterprise-grade applications.",
   "projects.featured": "Featured",
   "projects.code": "View Code",
+  "projects.demo": "Live demo",
   "projects.moreOn": "More on",
   "projects.all": "View All Projects on GitHub",
 
@@ -232,6 +233,7 @@ const fr = {
   "projects.desc": "Une sélection de projets que j’ai conçus — des systèmes d’IA aux applications d’entreprise.",
   "projects.featured": "À la une",
   "projects.code": "Voir le code",
+  "projects.demo": "Démo en ligne",
   "projects.moreOn": "Plus sur",
   "projects.all": "Voir tous les projets sur GitHub",
 

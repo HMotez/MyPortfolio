@@ -112,6 +112,18 @@ export const experiences = [
 /* `title` is a product name (also the id for icons) and stays untranslated */
 export const projects = [
   {
+    title: "AI Medical Assistant",
+    subtitle: { en: "AI · Live 2026", fr: "IA · En ligne 2026" },
+    description: {
+      en: "AI-powered medical triage platform: describe symptoms in free text (EN/FR) and get calibrated top-5 conditions, urgency, the right specialist and explanations per symptom. Includes verified-doctor review, admin dashboard, bilingual PDF reports and a 3D health timeline.",
+      fr: "Plateforme de triage médical basée sur l’IA : décrivez vos symptômes en texte libre (FR/EN) et obtenez les 5 pathologies les plus probables (probabilités calibrées), l’urgence, le spécialiste à consulter et l’influence de chaque symptôme. Avec relecture par des médecins vérifiés, tableau de bord admin, rapports PDF bilingues et timeline santé en 3D.",
+    },
+    tags: ["FastAPI", "React", "scikit-learn", "PostgreSQL", "Docker", "Three.js"],
+    github: "https://github.com/HMotez/AI-Medical-Assistant",
+    demo: "https://medai-hmotez.onrender.com",
+    featured: true,
+  },
+  {
     title: "GED — ISO 9001 Quality System",
     subtitle: { en: "PFE 2026", fr: "PFE 2026" },
     description: {
