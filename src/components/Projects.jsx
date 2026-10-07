@@ -2,7 +2,7 @@ import { motion, useInView, useScroll, useTransform, useSpring } from "framer-mo
 import { useEffect, useRef, useState } from "react";
 import {
   FaGithub, FaFileAlt, FaHeartbeat, FaHotel, FaUniversity,
-  FaArrowRight, FaStar,
+  FaArrowRight, FaStar, FaStethoscope, FaExternalLinkAlt,
 } from "react-icons/fa";
 import { projects } from "../data/portfolio";
 import SectionHeading from "./fx/SectionHeading";
@@ -12,6 +12,11 @@ import { useLang } from "../i18n/lang";
 import { trackSpotlight } from "./fx/spotlight";
 
 const projectConfig = {
+  "AI Medical Assistant": {
+    Icon: FaStethoscope,
+    color: "#f43f5e",
+    gradient: "from-rose-500 to-orange-500",
+  },
   "GED — ISO 9001 Quality System": {
     Icon: FaFileAlt,
     color: "#06b6d4",
@@ -297,17 +302,36 @@ function ProjectCard({ project, index }) {
             ))}
           </div>
 
-          <a
-            href={project.github}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-shrink-0 flex items-center gap-1.5 text-xs font-semibold
-              transition-all duration-200 group/cta whitespace-nowrap"
-            style={{ color }}
-          >
-            {t("projects.code")}
-            <FaArrowRight className="text-[0.6rem] group-hover/cta:translate-x-1 transition-transform duration-200" />
-          </a>
+          <div className="flex-shrink-0 flex flex-col items-end gap-2">
+            {project.demo && (
+              <a
+                href={project.demo}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap
+                  transition-transform duration-200 hover:-translate-y-0.5"
+                style={{ color, background: `${color}18`, border: `1px solid ${color}40` }}
+              >
+                <span className="relative flex h-2 w-2">
+                  <span className="absolute inline-flex h-full w-full rounded-full animate-ping opacity-70" style={{ background: color }} />
+                  <span className="relative inline-flex h-2 w-2 rounded-full" style={{ background: color }} />
+                </span>
+                {t("projects.demo")}
+                <FaExternalLinkAlt className="text-[0.55rem]" />
+              </a>
+            )}
+            <a
+              href={project.github}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-1.5 text-xs font-semibold
+                transition-all duration-200 group/cta whitespace-nowrap"
+              style={{ color }}
+            >
+              {t("projects.code")}
+              <FaArrowRight className="text-[0.6rem] group-hover/cta:translate-x-1 transition-transform duration-200" />
+            </a>
+          </div>
         </div>
       </div>
     </motion.div>
