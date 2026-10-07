@@ -18,4 +18,9 @@ export default defineConfig([
       parserOptions: { ecmaFeatures: { jsx: true } },
     },
   },
+  {
+    // the contact API runs on Node
+    files: ['server/**/*.js'],
+    languageOptions: { globals: globals.node },
+  },
 ])

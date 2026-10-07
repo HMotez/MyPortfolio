@@ -1,13 +1,26 @@
+/* Sends a test email with the Gmail settings from .env:  node server/test.js */
 import nodemailer from "nodemailer";
+import { config } from "dotenv";
+import { fileURLToPath } from "url";
+import { dirname, join } from "path";
+
+const __dirname = dirname(fileURLToPath(import.meta.url));
+config({ path: join(__dirname, "../.env") });
+
+const { GMAIL_USER, GMAIL_APP_PASSWORD } = process.env;
+if (!GMAIL_USER || !GMAIL_APP_PASSWORD) {
+  console.error("Set GMAIL_USER and GMAIL_APP_PASSWORD in .env first.");
+  process.exit(1);
+}
 
 const transporter = nodemailer.createTransport({
   service: "gmail",
-  auth: { user: "hmmotez9@gmail.com", pass: "mnxeydylaxgeiktg" },
+  auth: { user: GMAIL_USER, pass: GMAIL_APP_PASSWORD },
 });
 
 const info = await transporter.sendMail({
-  from: "Portfolio <hmmotez9@gmail.com>",
-  to:   "hmmotez9@gmail.com",
+  from: `Portfolio <${GMAIL_USER}>`,
+  to:   process.env.CONTACT_TO || GMAIL_USER,
   subject: "[Portfolio] ✅ Contact form is working!",
   html: `
     <div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:32px;background:#0a0f1e;color:#e2e8f0;border-radius:12px">
