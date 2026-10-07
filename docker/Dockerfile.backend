@@ -1,0 +1,16 @@
+# Contact-form API (Express). Only the server's own dependencies are installed.
+FROM node:22-alpine
+
+WORKDIR /app
+ENV NODE_ENV=production
+
+COPY server/package*.json ./
+RUN npm ci --omit=dev && npm cache clean --force
+
+COPY server/ .
+
+USER node
+EXPOSE 5000
+
+# Hosts such as Render pass the port to listen on in $PORT (the app reads it)
+CMD ["node", "index.js"]

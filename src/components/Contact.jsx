@@ -5,8 +5,13 @@ import {
   FaEnvelope, FaPhone, FaMapMarkerAlt, FaGithub, FaLinkedinIn,
   FaPaperPlane,
 } from "react-icons/fa";
+import SectionHeading from "./fx/SectionHeading";
+import { useLang } from "../i18n/lang";
+import { trackSpotlight } from "./fx/spotlight";
 
-const API_URL = import.meta.env.VITE_API_URL || "http://localhost:5000";
+/* VITE_API_URL: API address baked in at build time. Unset → local dev server in
+   development, same site (nginx proxies /api) in a production build. */
+const API_URL = import.meta.env.VITE_API_URL ?? (import.meta.env.DEV ? "http://localhost:5000" : "");
 
 function FadeIn({ children, delay = 0, direction = "up" }) {
   const ref = useRef(null);
@@ -28,9 +33,9 @@ function FadeIn({ children, delay = 0, direction = "up" }) {
 }
 
 const contactItems = [
-  { icon: FaEnvelope,      label: "Email",    value: "hamzaouii.moetez@gmail.com", href: "mailto:hamzaouii.moetez@gmail.com" },
-  { icon: FaPhone,         label: "Phone",    value: "+216 95 200 179",             href: "tel:+21695200179" },
-  { icon: FaMapMarkerAlt,  label: "Location", value: "Monastir, Tunisia",           href: null },
+  { icon: FaEnvelope,      label: "contact.email",    value: "hamzaouii.moetez@gmail.com",                 href: "mailto:hamzaouii.moetez@gmail.com" },
+  { icon: FaPhone,         label: "contact.phone",    value: "+216 95 200 179",                            href: "tel:+21695200179" },
+  { icon: FaMapMarkerAlt,  label: "contact.location", value: { en: "Monastir, Tunisia", fr: "Monastir, Tunisie" }, href: null },
 ];
 
 const socialLinks = [
@@ -38,7 +43,14 @@ const socialLinks = [
   { href: "https://linkedin.com/in/hamzaoui-moetez", icon: FaLinkedinIn, label: "LinkedIn" },
 ];
 
+const toastStyle = (border) => ({
+  background: "var(--color-ink-2)",
+  color: "var(--color-slate-200)",
+  border: `1px solid ${border}`,
+});
+
 export default function Contact() {
+  const { t, tr } = useLang();
   const [form, setForm]       = useState({ from_name: "", from_email: "", subject: "", message: "" });
   const [sending, setSending] = useState(false);
 
@@ -49,8 +61,8 @@ export default function Contact() {
     e.preventDefault();
     setSending(true);
 
-    const toastId = toast.loading("Sending message…", {
-      style: { background: "#0a0f1e", color: "#e2e8f0", border: "1px solid rgba(6,182,212,0.3)" },
+    const toastId = toast.loading(t("contact.toast.loading"), {
+      style: toastStyle("rgba(6,182,212,0.3)"),
     });
 
     try {
@@ -61,19 +73,19 @@ export default function Contact() {
       });
       if (!res.ok) throw new Error((await res.json()).error || "Server error");
 
-      toast.success("Message sent successfully! I'll get back to you soon 🚀", {
+      toast.success(t("contact.toast.ok"), {
         id: toastId,
         duration: 5000,
-        style: { background: "#0a0f1e", color: "#e2e8f0", border: "1px solid rgba(6,182,212,0.4)" },
+        style: toastStyle("rgba(6,182,212,0.4)"),
       });
 
       setForm({ from_name: "", from_email: "", subject: "", message: "" });
     } catch (err) {
-      console.error("EmailJS error:", err);
-      toast.error("Failed to send. Please try again or email me directly.", {
+      console.error("Contact form error:", err);
+      toast.error(t("contact.toast.err"), {
         id: toastId,
         duration: 5000,
-        style: { background: "#0a0f1e", color: "#e2e8f0", border: "1px solid rgba(239,68,68,0.4)" },
+        style: toastStyle("rgba(239,68,68,0.4)"),
       });
     } finally {
       setSending(false);
@@ -86,25 +98,19 @@ export default function Contact() {
         rounded-full bg-cyan-500/4 blur-[150px] pointer-events-none" />
 
       <div className="max-w-6xl mx-auto px-6">
-        <FadeIn>
-          <div className="text-center mb-16">
-            <p className="font-mono text-sm text-cyan-400 tracking-widest uppercase mb-3">Let's talk</p>
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
-              Get In <span className="text-cyan-400">Touch</span>
-            </h2>
-            <p className="text-slate-400 mt-4 max-w-xl mx-auto text-[0.95rem] leading-relaxed">
-              I'm currently looking for an{" "}
-              <span className="text-cyan-400 font-medium">alternance</span> or exciting opportunities.
-              Whether you have a question or a project idea — my inbox is always open!
-            </p>
-          </div>
-        </FadeIn>
+        <SectionHeading index="06" kicker={t("contact.kicker")} title={t("contact.title")} accent={t("contact.accent")} ghost={t("contact.ghost")}>
+          <p className="text-slate-400 mt-4 max-w-xl mx-auto text-[0.95rem] leading-relaxed">
+            {t("contact.desc1")}{" "}
+            <span className="text-cyan-400 font-medium">{t("contact.descHi")}</span>{" "}
+            {t("contact.desc2")}
+          </p>
+        </SectionHeading>
 
-        <div className="grid lg:grid-cols-2 gap-12">
+        <div className="bento-grid grid lg:grid-cols-2 gap-12" onPointerMove={(e) => trackSpotlight(e.currentTarget, e)}>
           {/* Info */}
           <FadeIn direction="left">
             <div>
-              <h3 className="text-white text-xl font-semibold mb-8">Contact Information</h3>
+              <h3 className="text-white text-xl font-semibold mb-8">{t("contact.info")}</h3>
 
               <div className="flex flex-col gap-4 mb-10">
                 {contactItems.map((item) => {
@@ -113,7 +119,7 @@ export default function Contact() {
                     <Wrapper
                       key={item.label}
                       {...(item.href ? { href: item.href } : {})}
-                      className="flex items-center gap-4 p-4 rounded-xl border border-white/[0.07] bg-white/[0.03]
+                      className="bento-card flex items-center gap-4 p-4 rounded-xl border border-white/[0.07] bg-white/[0.03]
                         hover:border-cyan-400/30 hover:bg-cyan-400/5 transition-all duration-200 group"
                     >
                       <div className="w-11 h-11 rounded-xl bg-cyan-400/10 border border-cyan-400/20
@@ -122,8 +128,8 @@ export default function Contact() {
                         <item.icon className="text-base" />
                       </div>
                       <div>
-                        <p className="text-slate-500 text-xs uppercase tracking-wider">{item.label}</p>
-                        <p className="text-slate-200 text-sm font-medium">{item.value}</p>
+                        <p className="text-slate-500 text-xs uppercase tracking-wider">{t(item.label)}</p>
+                        <p className="text-slate-200 text-sm font-medium">{tr(item.value)}</p>
                       </div>
                     </Wrapper>
                   );
@@ -131,7 +137,7 @@ export default function Contact() {
               </div>
 
               <div>
-                <p className="text-slate-500 text-xs uppercase tracking-wider mb-4">Find me on</p>
+                <p className="text-slate-500 text-xs uppercase tracking-wider mb-4">{t("contact.findMe")}</p>
                 <div className="flex gap-3">
                   {socialLinks.map((s) => (
                     <a
@@ -156,12 +162,12 @@ export default function Contact() {
           <FadeIn direction="right" delay={0.15}>
             <form
               onSubmit={handleSubmit}
-              className="p-7 rounded-2xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-sm"
+              className="bento-card p-7 rounded-2xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-sm"
             >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                 <div>
                   <label className="block text-slate-400 text-xs mb-1.5 uppercase tracking-wider">
-                    Your Name
+                    {t("contact.name")}
                   </label>
                   <input
                     name="from_name"
@@ -169,12 +175,12 @@ export default function Contact() {
                     required
                     value={form.from_name}
                     onChange={handleChange}
-                    placeholder="John Doe"
+                    placeholder={t("contact.ph.name")}
                   />
                 </div>
                 <div>
                   <label className="block text-slate-400 text-xs mb-1.5 uppercase tracking-wider">
-                    Email
+                    {t("contact.email")}
                   </label>
                   <input
                     name="from_email"
@@ -182,27 +188,27 @@ export default function Contact() {
                     required
                     value={form.from_email}
                     onChange={handleChange}
-                    placeholder="john@example.com"
+                    placeholder={t("contact.ph.email")}
                   />
                 </div>
               </div>
 
               <div className="mb-4">
                 <label className="block text-slate-400 text-xs mb-1.5 uppercase tracking-wider">
-                  Subject
+                  {t("contact.subject")}
                 </label>
                 <input
                   name="subject"
                   type="text"
                   value={form.subject}
                   onChange={handleChange}
-                  placeholder="Alternance Opportunity"
+                  placeholder={t("contact.ph.subject")}
                 />
               </div>
 
               <div className="mb-6">
                 <label className="block text-slate-400 text-xs mb-1.5 uppercase tracking-wider">
-                  Message
+                  {t("contact.message")}
                 </label>
                 <textarea
                   name="message"
@@ -210,7 +216,7 @@ export default function Contact() {
                   required
                   value={form.message}
                   onChange={handleChange}
-                  placeholder="Tell me about your project or opportunity..."
+                  placeholder={t("contact.ph.message")}
                   className="resize-none"
                 />
               </div>
@@ -226,7 +232,7 @@ export default function Contact() {
                   flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
               >
                 <FaPaperPlane className={sending ? "animate-spin" : ""} />
-                {sending ? "Sending…" : "Send Message"}
+                {sending ? t("contact.sending") : t("contact.send")}
               </motion.button>
             </form>
           </FadeIn>

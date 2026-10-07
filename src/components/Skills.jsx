@@ -12,6 +12,10 @@ import {
   SiTensorflow, SiScikitlearn,
 } from "react-icons/si";
 import { skills } from "../data/portfolio";
+import SectionHeading from "./fx/SectionHeading";
+import TiltCard from "./fx/TiltCard";
+import { useLang } from "../i18n/lang";
+import { trackSpotlight } from "./fx/spotlight";
 
 /* ── Icon + color + url map per technology ── */
 const techMap = {
@@ -79,23 +83,15 @@ function FadeIn({ children, delay = 0, className = "" }) {
 }
 
 export default function Skills() {
+  const { t } = useLang();
   return (
     <section id="skills" className="py-24 bg-transparent relative overflow-hidden">
       <div className="absolute bottom-0 right-1/3 w-80 h-80 rounded-full bg-purple-500/5 blur-[100px]" />
 
       <div className="max-w-7xl mx-auto px-6">
-        <FadeIn>
-          <div className="text-center mb-16">
-            <p className="font-mono text-sm text-cyan-400 tracking-widest uppercase mb-3">
-              What I work with
-            </p>
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
-              Skills &amp; <span className="text-cyan-400">Technologies</span>
-            </h2>
-          </div>
-        </FadeIn>
+        <SectionHeading index="02" kicker={t("skills.kicker")} title={t("skills.title")} accent={t("skills.accent")} ghost={t("skills.ghost")} />
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch">
+        <div className="bento-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 items-stretch" onPointerMove={(e) => trackSpotlight(e.currentTarget, e)}>
           {skills.map((skill, i) => (
             <FadeIn key={skill.category} delay={i * 0.08} className="h-full">
               <SkillCard skill={skill} />
@@ -108,17 +104,19 @@ export default function Skills() {
 }
 
 function SkillCard({ skill }) {
+  const { tr } = useLang();
   const ref = useRef(null);
   const isInView = useInView(ref, { once: true, margin: "-40px" });
   const catMeta = categoryIcons[skill.category] ?? { icon: FaCode, color: "#06b6d4" };
   const CatIcon = catMeta.icon;
 
   return (
+    <TiltCard className="h-full" glow={`${skill.color}2e`}>
     <motion.div
       ref={ref}
-      whileHover={{ y: -6, scale: 1.02 }}
+      whileHover={{ y: -6 }}
       transition={{ duration: 0.25 }}
-      className="relative p-6 rounded-2xl border border-white/[0.07] bg-white/[0.03]
+      className="bento-card relative p-6 rounded-2xl border border-white/[0.07] bg-white/[0.03]
         backdrop-blur-sm overflow-hidden group cursor-default h-full flex flex-col
         hover:border-white/15 transition-all duration-300"
     >
@@ -142,7 +140,7 @@ function SkillCard({ skill }) {
           >
             <CatIcon style={{ color: catMeta.color, fontSize: "1.2rem" }} />
           </div>
-          <h3 className="text-white font-semibold text-base">{skill.category}</h3>
+          <h3 className="text-white font-semibold text-base">{tr(skill.label)}</h3>
         </div>
 
         {/* Tech badges with individual icons */}
@@ -180,5 +178,6 @@ function SkillCard({ skill }) {
         </div>
       </div>
     </motion.div>
+    </TiltCard>
   );
 }
