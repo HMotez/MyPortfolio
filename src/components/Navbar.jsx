@@ -1,22 +1,21 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-scroll";
 import { motion, AnimatePresence } from "framer-motion";
+import Logo from "./fx/Logo";
+import { useIntroDone } from "./fx/IntroContext";
+import { LangToggle, ThemeToggle } from "./fx/Toggles";
+import { useLang } from "../i18n/lang";
 
-const links = [
-  { to: "home",           label: "Home"       },
-  { to: "about",          label: "About"      },
-  { to: "skills",         label: "Skills"     },
-  { to: "experience",     label: "Experience" },
-  { to: "projects",       label: "Projects"   },
-  { to: "certifications", label: "Certs"      },
-  { to: "contact",        label: "Contact"    },
-];
+const links = ["home", "about", "skills", "experience", "projects", "certifications", "contact"]
+  .map((to) => ({ to, key: `nav.${to}` }));
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
   const [active,   setActive]   = useState("home");
   const [menuOpen, setMenuOpen] = useState(false);
   const [progress, setProgress] = useState(0);
+  const introDone = useIntroDone();
+  const { t } = useLang();
 
   useEffect(() => {
     const handler = () => {
@@ -35,7 +34,7 @@ export default function Navbar() {
       transition={{ duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         scrolled
-          ? "backdrop-blur-md bg-[#050816]/85 border-b border-white/[0.07] shadow-2xl"
+          ? "backdrop-blur-md bg-ink/85 border-b border-white/[0.07] shadow-2xl"
           : "bg-transparent"
       }`}
     >
@@ -58,65 +57,15 @@ export default function Navbar() {
         />
       </div>
 
-      <div className="max-w-[1400px] mx-auto px-6 py-4 flex items-center justify-between">
+      <div className="max-w-[1400px] mx-auto px-6 py-3 flex items-center justify-between">
 
         {/* ── Logo ── */}
-        <Link to="home" smooth duration={600} className="cursor-pointer">
-          <div className="text-xl font-bold tracking-tight flex items-center">
-            {"HMoetez".split("").map((char, i) => (
-              <motion.span
-                key={i}
-                className="text-white inline-block"
-                /* entrance */
-                initial={{ y: -22, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.05 + i * 0.055, duration: 0.45, ease: "easeOut" }}
-                /* continuous wave — each letter bobs with offset, pauses 3 s */
-                style={{ display: "inline-block" }}
-                whileHover={{ y: -5, color: "#22d3ee", scale: 1.25, transition: { duration: 0.15 } }}
-              >
-                <motion.span
-                  style={{ display: "inline-block" }}
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{
-                    repeat: Infinity,
-                    repeatDelay: 3.5,
-                    duration: 0.55,
-                    delay: 0.8 + i * 0.09,
-                    ease: "easeInOut",
-                  }}
-                >
-                  {char}
-                </motion.span>
-              </motion.span>
-            ))}
-
-            {/* pulsing glowing dot */}
-            <motion.span
-              className="text-cyan-400 ml-[1px]"
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{
-                opacity: 1,
-                scale: 1,
-                textShadow: [
-                  "0 0 4px #22d3ee",
-                  "0 0 20px #22d3ee, 0 0 40px #06b6d4",
-                  "0 0 4px #22d3ee",
-                ],
-              }}
-              transition={{
-                opacity: { delay: 0.6, duration: 0.3 },
-                scale:   { delay: 0.6, duration: 0.3, type: "spring", stiffness: 300 },
-                textShadow: { repeat: Infinity, duration: 2, ease: "easeInOut", delay: 1 },
-              }}
-            >
-              .
-            </motion.span>
-          </div>
+        <Link to="home" smooth duration={600} className="cursor-pointer" aria-label={t("nav.top")}>
+          <Logo play={introDone} />
         </Link>
 
         {/* ── Desktop nav links ── */}
-        <ul className="hidden md:flex items-center gap-8">
+        <ul className="hidden lg:flex items-center gap-6 xl:gap-8">
           {links.map((l, i) => (
             <motion.li
               key={l.to}
@@ -134,13 +83,13 @@ export default function Navbar() {
                 className="cursor-pointer"
               >
                 <motion.span
-                  className={`relative text-sm font-medium block pb-1 ${
-                    active === l.to ? "text-cyan-400" : "text-slate-400"
+                  className={`relative text-sm font-medium block pb-1 whitespace-nowrap transition-colors ${
+                    active === l.to ? "text-cyan-400" : "text-slate-400 hover:text-white"
                   }`}
-                  whileHover={{ y: -2, color: "#ffffff" }}
+                  whileHover={{ y: -2 }}
                   transition={{ type: "spring", stiffness: 400, damping: 20 }}
                 >
-                  {l.label}
+                  {t(l.key)}
 
                   {/* sliding active underline */}
                   {active === l.to && (
@@ -181,25 +130,32 @@ export default function Navbar() {
           ))}
         </ul>
 
-        {/* ── Hire Me button (original style) ── */}
-        <motion.a
-          href="mailto:hamzaouii.moetez@gmail.com"
-          className="hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium
-            border border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/10 transition-all duration-200"
+        {/* ── Toggles + Hire Me ── */}
+        <motion.div
+          className="flex items-center gap-2 sm:gap-3 ml-auto lg:ml-0"
           initial={{ opacity: 0, x: 24 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ delay: 0.65, duration: 0.45, ease: "easeOut" }}
-          whileHover={{ scale: 1.05 }}
-          whileTap={{ scale: 0.95 }}
         >
-          Hire Me
-        </motion.a>
+          <LangToggle />
+          <ThemeToggle />
+          <motion.a
+            href="mailto:hamzaouii.moetez@gmail.com"
+            className="hidden xl:inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap
+              border border-cyan-400/40 text-cyan-400 hover:bg-cyan-400/10 transition-colors duration-200"
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+          >
+            {t("nav.hire")}
+          </motion.a>
+        </motion.div>
 
         {/* ── Mobile hamburger ── */}
         <motion.button
-          className="md:hidden flex flex-col gap-1.5 p-2"
+          className="lg:hidden flex flex-col gap-1.5 p-2 ml-2"
           onClick={() => setMenuOpen((o) => !o)}
-          aria-label="Toggle menu"
+          aria-label={t("nav.menu")}
+          aria-expanded={menuOpen}
           whileTap={{ scale: 0.88 }}
         >
           <motion.span
@@ -229,7 +185,7 @@ export default function Navbar() {
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
             transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
-            className="md:hidden overflow-hidden backdrop-blur-xl bg-[#050816]/96 border-t border-white/[0.06]"
+            className="lg:hidden overflow-hidden backdrop-blur-xl bg-ink/96 border-t border-white/[0.06]"
           >
             <ul className="flex flex-col px-6 py-4 gap-1">
               {links.map((l, i) => (
@@ -252,7 +208,7 @@ export default function Navbar() {
                       className="w-1.5 h-1.5 rounded-full bg-cyan-400/40 group-hover:bg-cyan-400 transition-colors"
                       whileHover={{ scale: 1.5 }}
                     />
-                    {l.label}
+                    {t(l.key)}
                   </Link>
                 </motion.li>
               ))}

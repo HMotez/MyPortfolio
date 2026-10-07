@@ -1,7 +1,10 @@
-import { motion, useInView } from "framer-motion";
+import { motion, useInView, useScroll, useSpring } from "framer-motion";
 import { useRef } from "react";
-import { FaBriefcase, FaGraduationCap, FaSchool, FaBuilding, FaMapMarkerAlt, FaCalendarAlt } from "react-icons/fa";
+import { FaBriefcase, FaGraduationCap, FaBuilding, FaMapMarkerAlt, FaCalendarAlt } from "react-icons/fa";
 import { experiences } from "../data/portfolio";
+import SectionHeading from "./fx/SectionHeading";
+import { useLang } from "../i18n/lang";
+import { trackSpotlight } from "./fx/spotlight";
 
 const typeIcon = {
   work: FaBriefcase,
@@ -28,33 +31,30 @@ function FadeIn({ children, delay = 0, direction = "up" }) {
 }
 
 export default function Experience() {
+  const { t } = useLang();
+  const timelineRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: timelineRef, offset: ["start 70%", "end 60%"] });
+  const progress = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
+
   return (
-    <section id="experience" className="py-24 bg-[#0a0f1e]/60 relative overflow-hidden">
+    <section id="experience" className="py-24 bg-ink-2/60 relative overflow-hidden">
       <div className="absolute top-1/2 left-1/4 w-72 h-72 rounded-full bg-cyan-500/5 blur-[100px] -translate-y-1/2" />
 
       <div className="max-w-5xl mx-auto px-6">
-        <FadeIn>
-          <div className="text-center mb-16">
-            <p className="font-mono text-sm text-cyan-400 tracking-widest uppercase mb-3">
-              My journey
-            </p>
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
-              Experience &amp; <span className="text-cyan-400">Education</span>
-            </h2>
-          </div>
-        </FadeIn>
+        <SectionHeading index="03" kicker={t("exp.kicker")} title={t("exp.title")} accent={t("exp.accent")} ghost={t("exp.ghost")} />
 
-        <div className="relative">
-          {/* Center line desktop */}
-          <div className="hidden md:block absolute left-1/2 top-0 bottom-0 w-[2px] -translate-x-1/2
-            bg-gradient-to-b from-transparent via-cyan-400/40 to-transparent" />
-          {/* Left line mobile */}
-          <div className="md:hidden absolute left-6 top-0 bottom-0 w-[2px]
-            bg-gradient-to-b from-transparent via-cyan-400/40 to-transparent" />
+        <div ref={timelineRef} className="relative">
+          {/* Track + scroll-drawn line (desktop centre, mobile left) */}
+          <div className="absolute left-6 md:left-1/2 top-0 bottom-0 w-[2px] -translate-x-1/2 bg-white/[0.06]" />
+          <motion.div
+            className="absolute left-6 md:left-1/2 top-0 bottom-0 w-[2px] -translate-x-1/2 origin-top
+              bg-gradient-to-b from-cyan-400 via-purple-500 to-pink-500 shadow-[0_0_12px_rgba(6,182,212,0.6)]"
+            style={{ scaleY: progress }}
+          />
 
-          <div className="flex flex-col gap-12">
+          <div className="bento-grid flex flex-col gap-12" onPointerMove={(e) => trackSpotlight(e.currentTarget, e)}>
             {experiences.map((exp, i) => (
-              <TimelineItem key={i} exp={exp} index={i} />
+              <TimelineItem key={exp.company + exp.type} exp={exp} index={i} />
             ))}
           </div>
         </div>
@@ -88,8 +88,8 @@ function TimelineItem({ exp, index }) {
           transition={{ duration: 0.4, delay: 0.1 }}
           className={`w-12 h-12 rounded-full border-2 flex items-center justify-center shadow-xl ${
             isWork
-              ? "border-cyan-400 bg-[#050816] shadow-cyan-400/30"
-              : "border-purple-400 bg-[#050816] shadow-purple-400/30"
+              ? "border-cyan-400 bg-ink shadow-cyan-400/30"
+              : "border-purple-400 bg-ink shadow-purple-400/30"
           }`}
         >
           <DotIcon className={isWork ? "text-cyan-400" : "text-purple-400"} />
@@ -114,8 +114,8 @@ function TimelineItem({ exp, index }) {
             viewport={{ once: true }}
             className={`w-10 h-10 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
               isWork
-                ? "border-cyan-400 bg-[#050816] shadow-cyan-400/20"
-                : "border-purple-400 bg-[#050816] shadow-purple-400/20"
+                ? "border-cyan-400 bg-ink shadow-cyan-400/20"
+                : "border-purple-400 bg-ink shadow-purple-400/20"
             }`}
           >
             <DotIcon className={`text-sm ${isWork ? "text-cyan-400" : "text-purple-400"}`} />
@@ -130,11 +130,12 @@ function TimelineItem({ exp, index }) {
 }
 
 function Card({ exp, isWork }) {
+  const { t, tr } = useLang();
   return (
     <motion.div
       whileHover={{ y: -4 }}
       transition={{ duration: 0.2 }}
-      className="p-6 rounded-2xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-sm
+      className="bento-card p-6 rounded-2xl border border-white/[0.07] bg-white/[0.03] backdrop-blur-sm
         hover:border-cyan-400/25 transition-all duration-300 group"
     >
       <div className="flex items-start justify-between gap-3 mb-3 flex-wrap">
@@ -147,15 +148,15 @@ function Card({ exp, isWork }) {
             }`}
           >
             {isWork ? <FaBriefcase className="text-[0.6rem]" /> : <FaGraduationCap className="text-[0.6rem]" />}
-            {isWork ? "Work" : "Education"}
+            {isWork ? t("exp.work") : t("exp.edu")}
           </span>
           <h3 className="text-white font-semibold text-base leading-snug group-hover:text-cyan-400 transition-colors duration-200">
-            {exp.title}
+            {tr(exp.title)}
           </h3>
         </div>
         <span className="flex items-center gap-1.5 text-slate-500 text-xs font-mono whitespace-nowrap">
           <FaCalendarAlt className="text-slate-600" />
-          {exp.period}
+          {tr(exp.period)}
         </span>
       </div>
 
@@ -163,9 +164,9 @@ function Card({ exp, isWork }) {
         <FaBuilding className="text-xs" /> {exp.company}
       </p>
       <p className="flex items-center gap-1.5 text-slate-500 text-xs mb-3">
-        <FaMapMarkerAlt className="text-xs" /> {exp.location}
+        <FaMapMarkerAlt className="text-xs" /> {tr(exp.location)}
       </p>
-      <p className="text-slate-400 text-sm leading-relaxed mb-4">{exp.description}</p>
+      <p className="text-slate-400 text-sm leading-relaxed mb-4">{tr(exp.description)}</p>
 
       {exp.tags.length > 0 && (
         <div className="flex flex-wrap gap-2">

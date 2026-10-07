@@ -1,76 +1,55 @@
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, useScroll, useTransform, useMotionValue, useSpring, useMotionTemplate } from "framer-motion";
 import { TypeAnimation } from "react-type-animation";
 import { Link } from "react-scroll";
-import { FaGithub, FaLinkedinIn, FaDownload, FaFilePdf, FaChevronDown } from "react-icons/fa";
+import { FaGithub, FaLinkedinIn, FaBrain } from "react-icons/fa";
+import { SiReact, SiNodedotjs, SiDocker } from "react-icons/si";
 import { HiMail, HiArrowDown } from "react-icons/hi";
-import { lazy, Suspense, useState, useRef, useEffect } from "react";
+import { lazy, Suspense, useRef } from "react";
+import Magnetic from "./fx/Magnetic";
+import { useIntroDone } from "./fx/IntroContext";
+import CVDownload from "./fx/CVDownload";
+import { useLang } from "../i18n/lang";
 const Hero3D = lazy(() => import("./Hero3D"));
+
+const EASE = [0.22, 1, 0.36, 1];
+
+/* Glass tech badges floating around the 3D scene; `depth` sets how far they drift with the mouse */
+const CHIPS = [
+  { label: "React", icon: SiReact, color: "#61DAFB", className: "left-[4%] top-[14%]", depth: 28, float: 5 },
+  { label: "Node.js", icon: SiNodedotjs, color: "#5FA04E", className: "right-[2%] top-[6%]", depth: -22, float: 6 },
+  { label: "AI · NLP", icon: FaBrain, color: "#c084fc", className: "left-[0%] bottom-[18%]", depth: -34, float: 7 },
+  { label: "Docker", icon: SiDocker, color: "#2496ED", className: "right-[6%] bottom-[10%]", depth: 18, float: 5.5 },
+];
+
+function Chip({ chip, mx, my, index, show }) {
+  const x = useTransform(mx, (v) => v * chip.depth);
+  const y = useTransform(my, (v) => v * chip.depth);
+  return (
+    <motion.div
+      className={`absolute ${chip.className} z-20 pointer-events-none hidden md:block`}
+      style={{ x, y }}
+      initial={{ opacity: 0, scale: 0.6 }}
+      animate={show ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.6 }}
+      transition={{ duration: 0.7, ease: EASE, delay: 1 + index * 0.12 }}
+    >
+      <motion.div
+        animate={{ y: [0, -10, 0] }}
+        transition={{ duration: chip.float, repeat: Infinity, ease: "easeInOut" }}
+        className="flex items-center gap-2 px-3.5 py-2 rounded-2xl text-sm font-semibold text-white
+          bg-white/[0.06] border border-white/[0.12] backdrop-blur-md shadow-[0_8px_30px_rgba(0,0,0,0.25)]"
+      >
+        <chip.icon style={{ color: chip.color }} className="text-base" />
+        {chip.label}
+      </motion.div>
+    </motion.div>
+  );
+}
 
 const social = [
   { href: "https://github.com/HMotez", icon: FaGithub, label: "GitHub" },
   { href: "https://linkedin.com/in/hamzaoui-moetez", icon: FaLinkedinIn, label: "LinkedIn" },
   { href: "mailto:hamzaouii.moetez@gmail.com", icon: HiMail, label: "Email" },
 ];
-
-function CVDownload() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef();
-
-  useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
-  return (
-    <div ref={ref} className="relative">
-      <motion.button
-        onClick={() => setOpen((o) => !o)}
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
-        className="flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm
-          bg-gradient-to-r from-purple-600 to-pink-600 text-white
-          hover:shadow-[0_0_25px_rgba(168,85,247,0.5)] transition-all duration-300"
-      >
-        <FaDownload className="text-xs" />
-        Download CV
-        <FaChevronDown className={`text-xs transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
-      </motion.button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.95 }}
-            transition={{ duration: 0.18 }}
-            className="absolute top-full mt-2 left-0 w-52 rounded-2xl overflow-hidden
-              border border-white/10 bg-[#0a0f1e]/95 backdrop-blur-xl shadow-2xl z-50"
-          >
-            {[
-              { label: "CV — English", file: "/cv_en.pdf", name: "Hamzaoui_Moetez_CV_EN.pdf", flag: "🇬🇧" },
-              { label: "CV — Français", file: "/cv_fr.pdf", name: "Hamzaoui_Moetez_CV_FR.pdf", flag: "🇫🇷" },
-            ].map(({ label, file, name, flag }) => (
-              <a
-                key={label}
-                href={file}
-                download={name}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm text-slate-300
-                  hover:bg-purple-500/15 hover:text-white transition-all duration-150 group"
-              >
-                <span className="text-base">{flag}</span>
-                <FaFilePdf className="text-rose-400 text-xs flex-shrink-0" />
-                <span className="font-medium">{label}</span>
-                <FaDownload className="ml-auto text-[10px] opacity-0 group-hover:opacity-60 transition-opacity" />
-              </a>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
 
 const containerVariants = {
   hidden: {},
@@ -82,11 +61,39 @@ const itemVariants = {
 };
 
 export default function Hero() {
+  const introDone = useIntroDone();
+  const { t, lang } = useLang();
+  const sectionRef = useRef(null);
+  const { scrollYProgress } = useScroll({ target: sectionRef, offset: ["start start", "end start"] });
+  const textY = useTransform(scrollYProgress, [0, 1], [0, 180]);
+  const textOpacity = useTransform(scrollYProgress, [0, 0.7], [1, 0]);
+  const modelY = useTransform(scrollYProgress, [0, 1], [0, -120]);
+  const modelScale = useTransform(scrollYProgress, [0, 1], [1, 0.85]);
+
+  /* pointer → normalised (-0.5..0.5) for chip parallax, pixels for the spotlight */
+  const mx = useSpring(useMotionValue(0), { stiffness: 60, damping: 20 });
+  const my = useSpring(useMotionValue(0), { stiffness: 60, damping: 20 });
+  const px = useMotionValue(-1000);
+  const py = useMotionValue(-1000);
+  const spotlight = useMotionTemplate`radial-gradient(600px circle at ${px}px ${py}px, rgba(34,211,238,0.10), transparent 60%)`;
+  const onPointerMove = (e) => {
+    const r = sectionRef.current.getBoundingClientRect();
+    px.set(e.clientX - r.left);
+    py.set(e.clientY - r.top);
+    mx.set(e.clientX / window.innerWidth - 0.5);
+    my.set(e.clientY / window.innerHeight - 0.5);
+  };
+
   return (
     <section
+      ref={sectionRef}
       id="home"
+      onPointerMove={onPointerMove}
       className="relative min-h-screen flex items-center overflow-hidden bg-transparent"
     >
+      {/* Cursor spotlight */}
+      <motion.div aria-hidden className="absolute inset-0 pointer-events-none" style={{ background: spotlight }} />
+
       {/* Orbs */}
       <div className="absolute top-[-10%] left-[-5%] w-[450px] h-[450px] rounded-full bg-cyan-500/10 blur-[100px] animate-pulse" />
       <div className="absolute bottom-[-5%] right-[-5%] w-[380px] h-[380px] rounded-full bg-purple-500/10 blur-[100px] animate-pulse" style={{ animationDelay: "2s" }} />
@@ -94,7 +101,7 @@ export default function Hero() {
 
       {/* Grid pattern */}
       <div
-        className="absolute inset-0 opacity-[0.03]"
+        className="absolute inset-0 opacity-[0.03] light:opacity-[0.07]"
         style={{
           backgroundImage:
             "linear-gradient(rgba(6,182,212,1) 1px, transparent 1px), linear-gradient(90deg, rgba(6,182,212,1) 1px, transparent 1px)",
@@ -110,30 +117,46 @@ export default function Hero() {
             className="lg:w-[45%] w-full text-center lg:text-left"
             variants={containerVariants}
             initial="hidden"
-            animate="visible"
+            animate={introDone ? "visible" : "hidden"}
+            style={{ y: textY, opacity: textOpacity }}
           >
             <motion.p
               variants={itemVariants}
-              className="inline-block font-mono text-sm text-cyan-400 mb-4 px-3 py-1 rounded-full border border-cyan-400/30 bg-cyan-400/5"
+              className="inline-block whitespace-pre font-mono text-sm text-cyan-400 mb-4 px-3 py-1 rounded-full border border-cyan-400/30 bg-cyan-400/5"
             >
-              👋 &nbsp;Welcome to my portfolio
+              {t("hero.welcome")}
             </motion.p>
 
             <motion.h1
-              variants={itemVariants}
-              className="text-5xl md:text-6xl lg:text-7xl font-extrabold leading-tight tracking-tight mb-4"
+              variants={{ hidden: {}, visible: { transition: { staggerChildren: 0.045 } } }}
+              className="font-display text-6xl md:text-7xl lg:text-8xl font-bold leading-[0.95] tracking-tight mb-6"
+              aria-label="Hamzaoui Moetez"
             >
-              <span className="text-white">Hamzaoui</span>
-              <br />
-              <span
-                style={{
-                  background: "linear-gradient(135deg,#06b6d4,#a855f7,#ec4899)",
-                  WebkitBackgroundClip: "text",
-                  WebkitTextFillColor: "transparent",
-                  backgroundClip: "text",
-                }}
-              >
-                Moetez
+              <span aria-hidden className="flex justify-center lg:justify-start overflow-hidden pb-1">
+                {"Hamzaoui".split("").map((c, i) => (
+                  <motion.span
+                    key={i}
+                    className="inline-block text-white hover:text-cyan-400 transition-colors duration-200 cursor-default"
+                    variants={{
+                      hidden: { y: "110%", rotate: 12 },
+                      visible: { y: "0%", rotate: 0, transition: { duration: 0.9, ease: EASE } },
+                    }}
+                    whileHover={{ y: -10, transition: { type: "spring", stiffness: 400, damping: 10 } }}
+                  >
+                    {c}
+                  </motion.span>
+                ))}
+              </span>
+              <span aria-hidden className="block overflow-hidden pb-2">
+                <motion.span
+                  className="inline-block text-gradient-anim"
+                  variants={{
+                    hidden: { y: "110%" },
+                    visible: { y: "0%", transition: { duration: 1, ease: EASE, delay: 0.35 } },
+                  }}
+                >
+                  Moetez
+                </motion.span>
               </span>
             </motion.h1>
 
@@ -141,20 +164,10 @@ export default function Hero() {
               variants={itemVariants}
               className="text-xl md:text-2xl text-slate-300 mb-6 font-light min-h-[2rem]"
             >
-              <span className="text-slate-400">I'm a </span>
+              <span className="text-slate-400">{t("hero.iam")}</span>
               <TypeAnimation
-                sequence={[
-                  "Full-Stack Developer",
-                  2000,
-                  "React.js Developer",
-                  2000,
-                  "Node.js Developer",
-                  2000,
-                  "AI Enthusiast",
-                  2000,
-                  "Problem Solver",
-                  2000,
-                ]}
+                key={lang}
+                sequence={t("hero.roles").flatMap((r) => [r, 2000])}
                 wrapper="span"
                 speed={50}
                 deletionSpeed={65}
@@ -167,44 +180,48 @@ export default function Hero() {
               variants={itemVariants}
               className="text-slate-400 text-base md:text-lg max-w-lg leading-relaxed mb-8 mx-auto lg:mx-0"
             >
-              Passionate about building modern full-stack applications, integrating AI,
-              and delivering high-impact software solutions. Currently seeking an
-              <span className="text-cyan-400 font-medium"> alternance</span> opportunity.
+              {t("hero.desc1")}
+              <span className="text-cyan-400 font-medium">{t("hero.descHi")}</span>
+              {t("hero.desc2")}
             </motion.p>
 
             <motion.div
               variants={itemVariants}
               className="flex flex-wrap gap-4 justify-center lg:justify-start mb-10"
             >
+              <Magnetic>
               <Link
                 to="projects"
                 smooth
                 duration={600}
                 offset={-80}
-                className="cursor-pointer px-7 py-3 rounded-full font-semibold text-sm
+                className="inline-block cursor-pointer px-7 py-3 rounded-full font-semibold text-sm
                   bg-gradient-to-r from-cyan-500 to-blue-600 text-white
                   hover:shadow-[0_0_25px_rgba(6,182,212,0.5)] transition-all duration-300 hover:-translate-y-0.5"
               >
-                View My Work
+                {t("hero.work")}
               </Link>
+              </Magnetic>
+              <Magnetic>
               <Link
                 to="contact"
                 smooth
                 duration={600}
                 offset={-80}
-                className="cursor-pointer px-7 py-3 rounded-full font-semibold text-sm
+                className="inline-block cursor-pointer px-7 py-3 rounded-full font-semibold text-sm
                   border border-cyan-400/50 text-cyan-400
                   hover:bg-cyan-400/10 hover:border-cyan-400 transition-all duration-300 hover:-translate-y-0.5"
               >
-                Get In Touch
+                {t("hero.touch")}
               </Link>
+              </Magnetic>
               <CVDownload />
             </motion.div>
 
             <motion.div variants={itemVariants} className="flex gap-3 justify-center lg:justify-start">
               {social.map((s) => (
+                <Magnetic key={s.label} strength={0.5}>
                 <a
-                  key={s.label}
                   href={s.href}
                   target={s.href.startsWith("mailto") ? undefined : "_blank"}
                   rel="noopener noreferrer"
@@ -215,20 +232,30 @@ export default function Hero() {
                 >
                   <s.icon />
                 </a>
+                </Magnetic>
               ))}
             </motion.div>
           </motion.div>
 
           {/* Right — 3D Canvas */}
           <motion.div
-            className="lg:w-[48%] w-full h-[360px] lg:h-[480px]"
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.9, ease: "easeOut", delay: 0.3 }}
+            className="relative lg:w-[52%] w-full h-[380px] lg:h-[560px]"
+            style={{ y: modelY, scale: modelScale }}
+            data-cursor={t("cursor.drag")}
           >
-            <Suspense fallback={<div className="w-full h-full rounded-2xl bg-white/[0.03] border border-white/[0.06] animate-pulse" />}>
-              <Hero3D />
-            </Suspense>
+            <motion.div
+              className="w-full h-full"
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={introDone ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+              transition={{ duration: 1.1, ease: EASE, delay: 0.3 }}
+            >
+              <Suspense fallback={<div className="w-full h-full rounded-2xl bg-white/[0.03] border border-white/[0.06] animate-pulse" />}>
+                <Hero3D />
+              </Suspense>
+            </motion.div>
+            {CHIPS.map((c, i) => (
+              <Chip key={c.label} chip={c} mx={mx} my={my} index={i} show={introDone} />
+            ))}
           </motion.div>
         </div>
 
@@ -239,7 +266,7 @@ export default function Hero() {
           animate={{ opacity: 1 }}
           transition={{ delay: 1.5 }}
         >
-          <span className="text-slate-500 text-xs font-mono tracking-widest">SCROLL</span>
+          <span className="text-slate-500 text-xs font-mono tracking-widest">{t("hero.scroll")}</span>
           <HiArrowDown className="text-cyan-400/60 text-xl animate-bounce" />
         </motion.div>
       </div>

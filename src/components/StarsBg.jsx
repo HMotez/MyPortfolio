@@ -29,11 +29,15 @@ export default function StarsBg() {
     const draw = (t) => {
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       const ts = t * 0.001;
+      /* light theme: faint ink-coloured dust instead of bright stars */
+      const light = document.documentElement.dataset.theme === "light";
+      const rgb = light ? "51,65,85" : "200,220,255";
+      const k = light ? 0.35 : 1;
       for (const s of stars) {
-        const alpha = s.base * 0.5 + 0.3 + Math.sin(ts * s.freq + s.phase) * 0.2;
+        const alpha = (s.base * 0.5 + 0.3 + Math.sin(ts * s.freq + s.phase) * 0.2) * k;
         ctx.beginPath();
         ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
-        ctx.fillStyle = `rgba(200,220,255,${Math.max(0, Math.min(1, alpha))})`;
+        ctx.fillStyle = `rgba(${rgb},${Math.max(0, Math.min(1, alpha))})`;
         ctx.fill();
       }
       raf = requestAnimationFrame(draw);

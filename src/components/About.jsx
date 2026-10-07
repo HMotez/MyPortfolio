@@ -1,252 +1,412 @@
-import { motion, useInView, AnimatePresence } from "framer-motion";
-import { useRef, useState, useEffect } from "react";
+import { useEffect, useRef, useState } from "react";
+import { motion, AnimatePresence, useScroll, useTransform } from "framer-motion";
 import {
-  FaMapMarkerAlt, FaEnvelope, FaPhone, FaGraduationCap,
-  FaLanguage, FaGithub, FaDownload, FaCode, FaRocket, FaGlobe,
-  FaFilePdf, FaChevronDown,
+  FaGithub, FaGraduationCap, FaMapMarkerAlt, FaRegCopy, FaCheck, FaLanguage, FaBolt, FaArrowRight,
 } from "react-icons/fa";
+import { personalInfo } from "../data/portfolio";
+import { useLang } from "../i18n/lang";
+import SectionHeading from "./fx/SectionHeading";
+import HoloPortrait from "./fx/HoloPortrait";
+import CountUp from "./fx/CountUp";
+import CVDownload from "./fx/CVDownload";
+import { trackSpotlight } from "./fx/spotlight";
 
-function CVDownload() {
-  const [open, setOpen] = useState(false);
-  const ref = useRef();
+const EASE = [0.22, 1, 0.36, 1];
 
-  useEffect(() => {
-    const handler = (e) => { if (ref.current && !ref.current.contains(e.target)) setOpen(false); };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, []);
-
+/* ── Statement whose words light up one by one as you scroll ─────────── */
+function Word({ children, progress, range }) {
+  const opacity = useTransform(progress, range, [0.12, 1]);
+  const y = useTransform(progress, range, [6, 0]);
   return (
-    <div ref={ref} className="relative">
-      <motion.button
-        onClick={() => setOpen((o) => !o)}
-        whileHover={{ scale: 1.04 }}
-        whileTap={{ scale: 0.96 }}
-        className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm
-          bg-gradient-to-r from-cyan-500 to-blue-600 text-white
-          hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] transition-all duration-300 hover:-translate-y-0.5"
-      >
-        <FaDownload className="text-xs" />
-        Download CV
-        <FaChevronDown className={`text-xs transition-transform duration-200 ${open ? "rotate-180" : ""}`} />
-      </motion.button>
-
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: -8, scale: 0.95 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: -8, scale: 0.95 }}
-            transition={{ duration: 0.18 }}
-            className="absolute top-full mt-2 left-0 w-52 rounded-2xl overflow-hidden
-              border border-white/10 bg-[#0a0f1e]/95 backdrop-blur-xl shadow-2xl z-50"
-          >
-            {[
-              { label: "CV — English",  file: "/cv_en.pdf", name: "Hamzaoui_Moetez_CV_EN.pdf", flag: "🇬🇧" },
-              { label: "CV — Français", file: "/cv_fr.pdf", name: "Hamzaoui_Moetez_CV_FR.pdf", flag: "🇫🇷" },
-            ].map(({ label, file, name, flag }) => (
-              <a
-                key={label}
-                href={file}
-                download={name}
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 text-sm text-slate-300
-                  hover:bg-cyan-500/15 hover:text-white transition-all duration-150 group"
-              >
-                <span className="text-base">{flag}</span>
-                <FaFilePdf className="text-rose-400 text-xs flex-shrink-0" />
-                <span className="font-medium">{label}</span>
-                <FaDownload className="ml-auto text-[10px] opacity-0 group-hover:opacity-60 transition-opacity" />
-              </a>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
+    <motion.span style={{ opacity, y }} className="inline-block mr-[0.28em]">
+      {children}
+    </motion.span>
   );
 }
-import { personalInfo } from "../data/portfolio";
 
-const infoItems = [
-  { icon: FaMapMarkerAlt, label: "Location", value: personalInfo.location },
-  { icon: FaEnvelope,     label: "Email",    value: personalInfo.email },
-  { icon: FaPhone,        label: "Phone",    value: personalInfo.phone },
-  { icon: FaGraduationCap,label: "Degree",   value: "BSc Software Engineering (2026)" },
-  { icon: FaLanguage,     label: "Languages",value: "Arabic · French · English" },
-];
-
-function FadeIn({ children, delay = 0, direction = "up" }) {
+function ScrollStatement({ text }) {
   const ref = useRef(null);
-  const isInView = useInView(ref, { once: true, margin: "-80px" });
+  const { scrollYProgress } = useScroll({ target: ref, offset: ["start 0.85", "end 0.45"] });
+  const words = text.split(" ");
+  return (
+    <p
+      ref={ref}
+      className="font-display font-semibold text-2xl sm:text-3xl md:text-[2.6rem] leading-[1.2] tracking-tight
+        text-white max-w-5xl mx-auto text-center mb-20"
+    >
+      {words.map((w, i) => (
+        <Word key={`${w}-${i}`} progress={scrollYProgress} range={[i / words.length, (i + 1) / words.length]}>
+          {w}
+        </Word>
+      ))}
+    </p>
+  );
+}
+
+/* ── Bento grid: tiles reveal in sequence, borders follow the pointer ── */
+const tileVariants = {
+  hidden: { opacity: 0, y: 40, scale: 0.96, filter: "blur(8px)" },
+  visible: { opacity: 1, y: 0, scale: 1, filter: "blur(0px)", transition: { duration: 0.8, ease: EASE } },
+};
+
+function Tile({ className = "", children }) {
+  return (
+    <motion.div variants={tileVariants} className={`bento-card ${className}`}>
+      {children}
+    </motion.div>
+  );
+}
+
+function TileLabel({ icon: Icon, children }) {
+  return (
+    <p className="flex items-center gap-2 font-mono text-[0.68rem] uppercase tracking-[0.2em] text-slate-500 mb-4">
+      <Icon className="text-cyan-400 text-xs" />
+      {children}
+    </p>
+  );
+}
+
+function BentoGrid({ children }) {
   return (
     <motion.div
-      ref={ref}
-      initial={{
-        opacity: 0,
-        y: direction === "up" ? 40 : 0,
-        x: direction === "left" ? -40 : direction === "right" ? 40 : 0,
-      }}
-      animate={isInView ? { opacity: 1, y: 0, x: 0 } : {}}
-      transition={{ duration: 0.7, ease: "easeOut", delay }}
+      onPointerMove={(e) => trackSpotlight(e.currentTarget, e)}
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: "-80px" }}
+      transition={{ staggerChildren: 0.08 }}
+      className="bento-grid grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4"
     >
       {children}
     </motion.div>
   );
 }
 
-export default function About() {
+/* ── Individual tiles ─────────────────────────────────────────────────── */
+/* The portrait tile is the holographic card itself (no tile chrome) */
+function PortraitTile() {
   return (
-    <section id="about" className="py-24 bg-[#0a0f1e]/60 relative overflow-hidden">
+    <motion.div variants={tileVariants} className="relative md:row-span-2 min-h-[520px]">
+      <HoloPortrait
+        photo="/profile-cutout.webp"
+        art="/avatar.jpg"
+        name="Hamzaoui Moetez"
+        role={{ en: "Full-Stack Developer · AI", fr: "Développeur Full-Stack · IA" }}
+      />
+    </motion.div>
+  );
+}
+
+function IntroTile() {
+  const { t, tr } = useLang();
+  return (
+    <Tile className="lg:col-span-2 p-7 md:p-8 flex flex-col justify-between">
+      <h3 className="font-display text-2xl md:text-[2rem] font-bold leading-tight text-white mb-5">
+        {t("about.headline")} <span className="text-gradient-anim">{t("about.headlineAccent")}</span>
+      </h3>
+      <div className="space-y-3">
+        {personalInfo.bio.slice(0, 2).map((p, i) => (
+          <p key={i} className="text-slate-400 leading-relaxed text-[0.95rem]">{tr(p)}</p>
+        ))}
+      </div>
+    </Tile>
+  );
+}
+
+/* Split-flap style digits: each changed character slides in */
+function FlipText({ text }) {
+  return (
+    <span className="inline-flex tabular-nums">
+      {text.split("").map((ch, i) => (
+        <span key={i} className="relative inline-block overflow-hidden h-[1.1em] leading-[1.1em]">
+          <AnimatePresence mode="popLayout" initial={false}>
+            <motion.span
+              key={ch}
+              className="inline-block"
+              initial={{ y: "-100%", opacity: 0 }}
+              animate={{ y: "0%", opacity: 1 }}
+              exit={{ y: "100%", opacity: 0 }}
+              transition={{ duration: 0.35, ease: EASE }}
+            >
+              {ch}
+            </motion.span>
+          </AnimatePresence>
+        </span>
+      ))}
+    </span>
+  );
+}
+
+function LocationTile() {
+  const { t, tr, lang } = useLang();
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(id);
+  }, []);
+
+  const locale = lang === "fr" ? "fr-FR" : "en-GB";
+  const time = new Intl.DateTimeFormat(locale, {
+    hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: false, timeZone: personalInfo.timeZone,
+  }).format(now);
+  const zone = new Intl.DateTimeFormat("en-GB", { timeZone: personalInfo.timeZone, timeZoneName: "short" })
+    .formatToParts(now).find((p) => p.type === "timeZoneName")?.value;
+
+  return (
+    <Tile className="p-6 flex flex-col justify-between min-h-[220px]">
+      <div aria-hidden className="absolute inset-0 dot-grid opacity-60 -z-10" />
+      {/* radar ping on the map */}
+      <div aria-hidden className="absolute right-8 top-8 -z-10">
+        {[0, 1, 2].map((i) => (
+          <motion.span
+            key={i}
+            className="absolute -left-10 -top-10 w-20 h-20 rounded-full border border-cyan-400/50"
+            initial={{ scale: 0.2, opacity: 0.9 }}
+            animate={{ scale: 1.6, opacity: 0 }}
+            transition={{ duration: 3, repeat: Infinity, delay: i, ease: "easeOut" }}
+          />
+        ))}
+        <span className="absolute -left-1.5 -top-1.5 w-3 h-3 rounded-full bg-cyan-400 shadow-[0_0_14px_rgba(34,211,238,0.9)]" />
+      </div>
+
+      <TileLabel icon={FaMapMarkerAlt}>{t("about.basedIn")}</TileLabel>
+      <div>
+        <p className="font-display text-xl font-bold text-white">{tr(personalInfo.location)}</p>
+        <p className="mt-3 text-[0.7rem] font-mono uppercase tracking-[0.2em] text-slate-500">
+          {t("about.localTime")} · {zone}
+        </p>
+        <p className="font-display text-3xl font-bold text-cyan-400 mt-1" aria-live="off">
+          <FlipText text={time} />
+        </p>
+      </div>
+    </Tile>
+  );
+}
+
+function StatsTile() {
+  const { t } = useLang();
+  return (
+    <Tile className="md:col-span-2 p-6 md:p-8">
+      <div className="grid grid-cols-3 divide-x divide-white/[0.07] h-full">
+        {personalInfo.stats.map((s) => (
+          <div key={s.key} className="flex flex-col items-center justify-center text-center px-2">
+            <span className="font-display text-5xl md:text-6xl font-bold leading-none text-gradient-anim">
+              <CountUp value={s.number} />
+            </span>
+            <span className="mt-3 text-xs md:text-sm text-slate-400">{t(`about.stat.${s.key}`)}</span>
+          </div>
+        ))}
+      </div>
+    </Tile>
+  );
+}
+
+const GREETINGS = [
+  { text: "Hello", lang: "en" },
+  { text: "Bonjour", lang: "fr" },
+  { text: "مرحبا", lang: "ar" },
+];
+
+function LanguagesTile() {
+  const { t } = useLang();
+  const [i, setI] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setI((n) => (n + 1) % GREETINGS.length), 2200);
+    return () => clearInterval(id);
+  }, []);
+  const g = GREETINGS[i];
+
+  return (
+    <Tile className="p-6 flex flex-col justify-between min-h-[220px]">
+      <TileLabel icon={FaLanguage}>{t("about.languages")}</TileLabel>
+      <div className="relative h-16 overflow-hidden">
+        <AnimatePresence mode="popLayout" initial={false}>
+          <motion.span
+            key={g.text}
+            lang={g.lang}
+            dir={g.lang === "ar" ? "rtl" : "ltr"}
+            className="absolute inset-x-0 font-display text-5xl font-bold text-white"
+            initial={{ y: "100%", opacity: 0, filter: "blur(6px)" }}
+            animate={{ y: "0%", opacity: 1, filter: "blur(0px)" }}
+            exit={{ y: "-100%", opacity: 0, filter: "blur(6px)" }}
+            transition={{ duration: 0.6, ease: EASE }}
+          >
+            {g.text}
+          </motion.span>
+        </AnimatePresence>
+      </div>
+      <p className="text-slate-400 text-sm">{t("about.languagesList")}</p>
+    </Tile>
+  );
+}
+
+function EducationTile() {
+  const { t } = useLang();
+  return (
+    <Tile className="p-6 flex flex-col justify-between min-h-[200px]">
+      <TileLabel icon={FaGraduationCap}>{t("about.education")}</TileLabel>
+      <motion.div
+        aria-hidden
+        className="absolute -right-6 -bottom-8 text-[9rem] text-white/[0.04] -z-10"
+        animate={{ rotate: [0, -8, 0] }}
+        transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
+      >
+        <FaGraduationCap />
+      </motion.div>
+      <div>
+        <p className="font-display text-lg font-bold text-white leading-snug">{t("about.degree")}</p>
+        <p className="text-slate-400 text-sm mt-1">{t("about.school")}</p>
+      </div>
+    </Tile>
+  );
+}
+
+/* Cycles a highlight through what I'm doing now */
+function NowTile() {
+  const { t } = useLang();
+  const items = t("about.nowItems");
+  const [active, setActive] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => setActive((n) => (n + 1) % items.length), 2400);
+    return () => clearInterval(id);
+  }, [items.length]);
+
+  return (
+    <Tile className="p-6 min-h-[200px]">
+      <TileLabel icon={FaBolt}>{t("about.now")}</TileLabel>
+      <ul className="space-y-1">
+        {items.map((it, i) => (
+          <li key={it} className="relative px-3 py-1.5 text-sm">
+            {i === active && (
+              <motion.span
+                layoutId="now-highlight"
+                className="absolute inset-0 rounded-lg bg-cyan-400/10 border border-cyan-400/25"
+                transition={{ type: "spring", stiffness: 300, damping: 30 }}
+              />
+            )}
+            <span className={`relative flex items-center gap-2 transition-colors duration-300 ${
+              i === active ? "text-white" : "text-slate-500"
+            }`}>
+              <span className={`w-1.5 h-1.5 rounded-full ${i === active ? "bg-cyan-400" : "bg-slate-600"}`} />
+              {it}
+            </span>
+          </li>
+        ))}
+      </ul>
+    </Tile>
+  );
+}
+
+function EmailTile() {
+  const { t } = useLang();
+  const [copied, setCopied] = useState(false);
+
+  const copy = async () => {
+    try {
+      await navigator.clipboard.writeText(personalInfo.email);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1800);
+    } catch {
+      window.location.href = `mailto:${personalInfo.email}`;
+    }
+  };
+
+  return (
+    <Tile className="p-6 flex flex-col justify-between min-h-[200px]">
+      <p className="font-display text-2xl font-bold text-white leading-tight">{t("about.email")}</p>
+      <div>
+        <a
+          href={`mailto:${personalInfo.email}`}
+          className="block text-sm text-slate-400 hover:text-cyan-400 transition-colors break-all mb-3"
+        >
+          {personalInfo.email}
+        </a>
+        <motion.button
+          type="button"
+          onClick={copy}
+          whileTap={{ scale: 0.95 }}
+          className="relative inline-flex items-center gap-2 px-4 py-2 rounded-full text-xs font-semibold
+            border border-white/10 bg-white/[0.04] text-slate-200 hover:border-cyan-400/50 transition-colors overflow-hidden"
+        >
+          <AnimatePresence mode="wait" initial={false}>
+            <motion.span
+              key={copied ? "ok" : "copy"}
+              className={`flex items-center gap-2 ${copied ? "text-emerald-400" : ""}`}
+              initial={{ y: 12, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              exit={{ y: -12, opacity: 0 }}
+              transition={{ duration: 0.2 }}
+            >
+              {copied ? <FaCheck /> : <FaRegCopy />}
+              {copied ? t("about.copied") : t("about.copy")}
+            </motion.span>
+          </AnimatePresence>
+        </motion.button>
+      </div>
+    </Tile>
+  );
+}
+
+function CtaTile() {
+  const { t } = useLang();
+  return (
+    <Tile className="md:col-span-2 lg:col-span-1 p-6 flex flex-col justify-between min-h-[200px] overflow-visible">
+      <div className="flex items-start justify-between">
+        <p className="font-display text-2xl font-bold text-white">{t("about.cvTitle")}</p>
+        <motion.span
+          aria-hidden
+          className="w-10 h-10 rounded-full border border-white/10 flex items-center justify-center text-slate-400"
+          animate={{ rotate: [0, -45, 0] }}
+          transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+        >
+          <FaArrowRight />
+        </motion.span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        <CVDownload variant="cyan" up />
+        <a
+          href={personalInfo.github}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-2 px-5 py-3 rounded-full font-semibold text-sm
+            border border-white/10 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-400 transition-colors"
+        >
+          <FaGithub />
+          {t("about.github")}
+        </a>
+      </div>
+    </Tile>
+  );
+}
+
+export default function About() {
+  const { t } = useLang();
+  return (
+    <section id="about" className="py-24 bg-ink-2/60 relative overflow-hidden">
       <div className="absolute top-0 left-1/4 w-80 h-80 rounded-full bg-cyan-500/5 blur-[100px]" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 rounded-full bg-purple-500/5 blur-[120px]" />
 
       <div className="max-w-7xl mx-auto px-6">
-        <FadeIn>
-          <div className="text-center mb-16">
-            <p className="font-mono text-sm text-cyan-400 tracking-widest uppercase mb-3">
-              Get to know me
-            </p>
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
-              About <span className="text-cyan-400">Me</span>
-            </h2>
-          </div>
-        </FadeIn>
+        <SectionHeading
+          index="01"
+          kicker={t("about.kicker")}
+          title={t("about.title")}
+          accent={t("about.accent")}
+          ghost={t("about.ghost")}
+        />
 
-        <div className="grid lg:grid-cols-2 gap-16 items-center">
+        <ScrollStatement key={t("about.statement")} text={t("about.statement")} />
 
-          {/* Left — Avatar */}
-          <FadeIn direction="left">
-            <div className="relative flex flex-col items-center">
-              <div className="relative mb-8">
-                {/* Glow */}
-                <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-cyan-500/25 to-purple-500/25 blur-2xl -z-10 scale-110" />
-                {/* Gradient border */}
-                <div className="p-[3px] rounded-2xl bg-gradient-to-br from-cyan-400 via-purple-500 to-pink-500 shadow-2xl shadow-cyan-500/20">
-                  <div className="rounded-[14px] overflow-hidden bg-[#050816]" style={{ width: "290px", height: "340px" }}>
-                    <img
-                      src="/profile.jpg"
-                      alt="Hamzaoui Moetez"
-                      className="w-full h-full object-cover object-top hover:scale-105 transition-transform duration-500"
-                    />
-                  </div>
-                </div>
-
-                {/* Available badge — top right, professional */}
-                <motion.div
-                  animate={{ y: [0, -4, 0] }}
-                  transition={{ duration: 2.5, repeat: Infinity, ease: "easeInOut" }}
-                  className="absolute -top-4 -right-4 z-20"
-                >
-                  <div className="flex items-center gap-2 px-4 py-2 rounded-xl
-                    bg-[#0d1b2a] border border-emerald-400/30 shadow-xl shadow-emerald-400/10
-                    backdrop-blur-sm">
-                    <div className="relative flex h-3 w-3">
-                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-60" />
-                      <span className="relative inline-flex h-3 w-3 rounded-full bg-emerald-400" />
-                    </div>
-                    <span className="text-emerald-400 text-xs font-semibold tracking-wide">Available for work</span>
-                  </div>
-                </motion.div>
-              </div>
-
-              {/* Stats */}
-              <div className="grid grid-cols-3 gap-3 w-full max-w-[320px]">
-                {[
-                  { number: "3+", label: "Years Coding",     icon: FaCode,    color: "#06b6d4", glow: "rgba(6,182,212,0.15)" },
-                  { number: "5+", label: "Projects Built",   icon: FaRocket,  color: "#a855f7", glow: "rgba(168,85,247,0.15)" },
-                  { number: "3",  label: "Languages",        icon: FaGlobe,   color: "#ec4899", glow: "rgba(236,72,153,0.15)" },
-                ].map((s) => (
-                  <motion.div
-                    key={s.label}
-                    whileHover={{ y: -5, scale: 1.04 }}
-                    transition={{ duration: 0.2 }}
-                    className="relative flex flex-col items-center py-5 px-3 rounded-2xl overflow-hidden cursor-default group"
-                    style={{
-                      background: "rgba(255,255,255,0.03)",
-                      border: "1px solid rgba(255,255,255,0.07)",
-                    }}
-                  >
-                    {/* Top accent line */}
-                    <div
-                      className="absolute top-0 left-0 right-0 h-[2px] rounded-t-2xl"
-                      style={{ background: `linear-gradient(90deg, transparent, ${s.color}, transparent)` }}
-                    />
-                    {/* Hover glow */}
-                    <div
-                      className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 rounded-2xl"
-                      style={{ background: `radial-gradient(ellipse at top, ${s.glow}, transparent 70%)` }}
-                    />
-                    {/* Icon */}
-                    <div
-                      className="w-9 h-9 rounded-xl flex items-center justify-center mb-3 relative z-10"
-                      style={{ background: `${s.color}18`, border: `1px solid ${s.color}30` }}
-                    >
-                      <s.icon style={{ color: s.color, fontSize: "0.85rem" }} />
-                    </div>
-                    {/* Number */}
-                    <span
-                      className="text-2xl font-extrabold leading-none mb-1 relative z-10"
-                      style={{ color: s.color }}
-                    >
-                      {s.number}
-                    </span>
-                    {/* Label */}
-                    <span className="text-[0.65rem] text-slate-400 text-center leading-tight relative z-10">
-                      {s.label}
-                    </span>
-                  </motion.div>
-                ))}
-              </div>
-            </div>
-          </FadeIn>
-
-          {/* Right — Text */}
-          <FadeIn direction="right" delay={0.15}>
-            <div>
-              <h3 className="text-2xl font-semibold text-white mb-6">
-                Full-Stack Developer &amp;{" "}
-                <span className="text-cyan-400">AI Enthusiast</span>
-              </h3>
-
-              {personalInfo.bio.map((para, i) => (
-                <p key={i} className="text-slate-400 leading-relaxed mb-4 text-[0.95rem]">
-                  {para}
-                </p>
-              ))}
-
-              <div className="mt-8 grid grid-cols-1 sm:grid-cols-2 gap-3">
-                {infoItems.map((item) => (
-                  <div
-                    key={item.label}
-                    className="flex items-center gap-3 p-3 rounded-lg bg-white/[0.03] border border-white/[0.06]
-                      hover:border-cyan-400/20 transition-colors duration-200"
-                  >
-                    <item.icon className="text-cyan-400 text-base flex-shrink-0" />
-                    <div>
-                      <p className="text-[0.7rem] text-slate-500 uppercase tracking-wider">{item.label}</p>
-                      <p className="text-slate-300 text-sm font-medium">{item.value}</p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="mt-8 flex flex-wrap gap-3">
-                <CVDownload />
-                <a
-                  href="https://github.com/HMotez"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 px-6 py-3 rounded-full font-semibold text-sm
-                    border border-white/10 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-400
-                    transition-all duration-300 hover:-translate-y-0.5"
-                >
-                  <FaGithub />
-                  GitHub Profile
-                </a>
-              </div>
-            </div>
-          </FadeIn>
-
-        </div>
+        <BentoGrid>
+          <PortraitTile />
+          <IntroTile />
+          <LocationTile />
+          <StatsTile />
+          <LanguagesTile />
+          <EducationTile />
+          <NowTile />
+          <EmailTile />
+          <CtaTile />
+        </BentoGrid>
       </div>
     </section>
   );

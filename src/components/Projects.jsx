@@ -1,10 +1,15 @@
-import { motion, useInView } from "framer-motion";
-import { useRef } from "react";
+import { motion, useInView, useScroll, useTransform, useSpring } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
 import {
   FaGithub, FaFileAlt, FaHeartbeat, FaHotel, FaUniversity,
   FaArrowRight, FaStar,
 } from "react-icons/fa";
 import { projects } from "../data/portfolio";
+import SectionHeading from "./fx/SectionHeading";
+import TiltCard from "./fx/TiltCard";
+import useMediaQuery from "./fx/useMediaQuery";
+import { useLang } from "../i18n/lang";
+import { trackSpotlight } from "./fx/spotlight";
 
 const projectConfig = {
   "GED — ISO 9001 Quality System": {
@@ -44,57 +49,138 @@ function FadeIn({ children, delay = 0 }) {
   );
 }
 
-export default function Projects() {
+/* Desktop: section pins and the cards slide horizontally as you scroll down. */
+function HorizontalProjects() {
+  const targetRef = useRef(null);
+  const trackRef = useRef(null);
+  const [distance, setDistance] = useState(0);
+
+  useEffect(() => {
+    const measure = () => setDistance(Math.max(0, trackRef.current.scrollWidth - window.innerWidth));
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(trackRef.current);
+    window.addEventListener("resize", measure);
+    return () => { ro.disconnect(); window.removeEventListener("resize", measure); };
+  }, []);
+
+  const { scrollYProgress } = useScroll({ target: targetRef, offset: ["start start", "end end"] });
+  const x = useTransform(scrollYProgress, [0, 1], [0, -distance]);
+  const bar = useSpring(scrollYProgress, { stiffness: 120, damping: 30 });
+
   return (
-    <section id="projects" className="py-24 bg-transparent relative overflow-hidden">
+    <div ref={targetRef} className="relative" style={{ height: `calc(100vh + ${distance}px)` }}>
+      <div className="sticky top-0 h-screen flex flex-col justify-center overflow-hidden">
+        <motion.div
+          ref={trackRef}
+          style={{ x }}
+          onPointerMove={(e) => trackSpotlight(e.currentTarget, e)}
+          className="bento-grid flex gap-8 w-max items-stretch pl-[max(1.5rem,calc((100vw-80rem)/2+1.5rem))] pr-[8vw] pt-16"
+        >
+          {projects.map((project, i) => (
+            <TiltCard key={project.title} max={6} className="w-[34rem] shrink-0">
+              <ProjectCard project={project} index={i + 1} />
+            </TiltCard>
+          ))}
+          <GithubEndCard />
+        </motion.div>
+
+        {/* progress */}
+        <div className="mx-auto mt-10 w-[min(80rem,calc(100vw-3rem))] flex items-center gap-4">
+          <span className="font-mono text-xs text-slate-500">01</span>
+          <div className="relative flex-1 h-[2px] bg-white/[0.07] rounded-full overflow-hidden">
+            <motion.div
+              className="absolute inset-0 origin-left bg-gradient-to-r from-cyan-400 via-purple-500 to-pink-500"
+              style={{ scaleX: bar }}
+            />
+          </div>
+          <span className="font-mono text-xs text-slate-500">{String(projects.length).padStart(2, "0")}</span>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function GithubEndCard() {
+  const { t } = useLang();
+  return (
+    <a
+      href="https://github.com/HMotez"
+      target="_blank"
+      rel="noopener noreferrer"
+      data-cursor={t("cursor.open")}
+      className="w-[22rem] shrink-0 rounded-2xl border border-dashed border-white/15 flex flex-col items-center justify-center gap-5
+        text-slate-400 hover:text-white hover:border-cyan-400/50 transition-colors duration-300 group"
+    >
+      <motion.span
+        className="w-20 h-20 rounded-full flex items-center justify-center border border-white/15 text-3xl
+          group-hover:bg-cyan-400 group-hover:text-ink group-hover:border-cyan-400 transition-colors duration-300"
+        whileHover={{ rotate: -45 }}
+      >
+        <FaArrowRight />
+      </motion.span>
+      <span className="font-display text-2xl font-bold text-center leading-tight">
+        {t("projects.moreOn")}<br /><span className="text-gradient-anim">GitHub</span>
+      </span>
+    </a>
+  );
+}
+
+export default function Projects() {
+  const { t } = useLang();
+  const horizontal = useMediaQuery("(min-width: 1024px) and (prefers-reduced-motion: no-preference)");
+
+  return (
+    <section id="projects" className="py-24 bg-transparent relative overflow-x-clip">
       <div className="absolute top-1/3 right-0 w-80 h-80 rounded-full bg-pink-500/5 blur-[120px] pointer-events-none" />
       <div className="absolute bottom-1/3 left-0 w-64 h-64 rounded-full bg-cyan-500/5 blur-[100px] pointer-events-none" />
 
       <div className="max-w-7xl mx-auto px-6">
-        <FadeIn>
-          <div className="text-center mb-16">
-            <p className="font-mono text-sm text-cyan-400 tracking-widest uppercase mb-3">
-              What I've built
-            </p>
-            <h2 className="text-4xl md:text-5xl font-bold text-white">
-              My <span className="text-cyan-400">Projects</span>
-            </h2>
-            <p className="text-slate-400 mt-4 max-w-lg mx-auto text-[0.95rem] leading-relaxed">
-              A selection of projects I've engineered — from AI systems to enterprise-grade applications.
-            </p>
-          </div>
-        </FadeIn>
-
-        <div className="grid md:grid-cols-2 gap-6 mb-12">
-          {projects.map((project, i) => (
-            <FadeIn key={project.title} delay={i * 0.1}>
-              <ProjectCard project={project} index={i + 1} />
-            </FadeIn>
-          ))}
-        </div>
-
-        <FadeIn delay={0.45}>
-          <div className="text-center">
-            <a
-              href="https://github.com/HMotez"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full font-semibold text-sm
-                border border-white/10 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-400
-                transition-all duration-300 hover:-translate-y-0.5 group"
-            >
-              <FaGithub className="text-lg" />
-              View All Projects on GitHub
-              <FaArrowRight className="text-xs opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
-            </a>
-          </div>
-        </FadeIn>
+        <SectionHeading index="04" kicker={t("projects.kicker")} title={t("projects.title")} accent={t("projects.accent")} ghost={t("projects.ghost")}>
+          <p className="text-slate-400 mt-4 max-w-lg mx-auto text-[0.95rem] leading-relaxed">
+            {t("projects.desc")}
+          </p>
+        </SectionHeading>
       </div>
+
+      {horizontal ? (
+        <HorizontalProjects />
+      ) : (
+        <div className="max-w-7xl mx-auto px-6">
+          <div className="bento-grid grid md:grid-cols-2 gap-6 mb-12" onPointerMove={(e) => trackSpotlight(e.currentTarget, e)}>
+            {projects.map((project, i) => (
+              <FadeIn key={project.title} delay={i * 0.1}>
+                <TiltCard max={6} className="h-full">
+                  <ProjectCard project={project} index={i + 1} />
+                </TiltCard>
+              </FadeIn>
+            ))}
+          </div>
+
+          <FadeIn delay={0.45}>
+            <div className="text-center">
+              <a
+                href="https://github.com/HMotez"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2.5 px-8 py-3.5 rounded-full font-semibold text-sm
+                  border border-white/10 text-slate-300 hover:border-cyan-400/50 hover:text-cyan-400
+                  transition-all duration-300 hover:-translate-y-0.5 group"
+              >
+                <FaGithub className="text-lg" />
+                {t("projects.all")}
+                <FaArrowRight className="text-xs opacity-0 -translate-x-1 group-hover:opacity-100 group-hover:translate-x-0 transition-all duration-200" />
+              </a>
+            </div>
+          </FadeIn>
+        </div>
+      )}
     </section>
   );
 }
 
 function ProjectCard({ project, index }) {
+  const { t, tr } = useLang();
   const cfg = projectConfig[project.title] ?? {
     Icon: FaFileAlt,
     color: "#06b6d4",
@@ -107,7 +193,7 @@ function ProjectCard({ project, index }) {
     <motion.div
       whileHover={{ y: -6 }}
       transition={{ duration: 0.25, ease: "easeOut" }}
-      className="relative rounded-2xl border border-white/[0.07] bg-[#080d1e] overflow-hidden group
+      className="bento-card relative h-full rounded-2xl border border-white/[0.07] bg-card overflow-hidden group
         hover:border-white/[0.14] transition-colors duration-300 flex flex-col"
     >
       {/* Top gradient line */}
@@ -146,7 +232,7 @@ function ProjectCard({ project, index }) {
                 className="text-[0.68rem] font-bold text-slate-400 uppercase tracking-[0.14em] px-2.5 py-0.5
                   rounded-full border border-white/[0.08] bg-white/[0.04] inline-block w-fit"
               >
-                {project.subtitle}
+                {tr(project.subtitle)}
               </span>
               <span className="text-[0.62rem] font-mono text-slate-600 pl-0.5">#{indexStr}</span>
             </div>
@@ -163,7 +249,7 @@ function ProjectCard({ project, index }) {
                 }}
               >
                 <FaStar className="text-[0.5rem]" />
-                Featured
+                {t("projects.featured")}
               </span>
             )}
             <a
@@ -193,7 +279,7 @@ function ProjectCard({ project, index }) {
 
         {/* Description */}
         <p className="text-slate-400 text-sm leading-relaxed mb-6 flex-1">
-          {project.description}
+          {tr(project.description)}
         </p>
 
         {/* Footer: tags + CTA */}
@@ -219,7 +305,7 @@ function ProjectCard({ project, index }) {
               transition-all duration-200 group/cta whitespace-nowrap"
             style={{ color }}
           >
-            View Code
+            {t("projects.code")}
             <FaArrowRight className="text-[0.6rem] group-hover/cta:translate-x-1 transition-transform duration-200" />
           </a>
         </div>
