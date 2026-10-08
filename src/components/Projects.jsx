@@ -17,11 +17,6 @@ const projectConfig = {
     color: "#f43f5e",
     gradient: "from-rose-500 to-orange-500",
   },
-  "GED — ISO 9001 Quality System": {
-    Icon: FaFileAlt,
-    color: "#06b6d4",
-    gradient: "from-cyan-500 to-blue-600",
-  },
   "TrueCare AI — Medical Reimbursements": {
     Icon: FaHeartbeat,
     color: "#a855f7",
