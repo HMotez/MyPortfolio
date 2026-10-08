@@ -124,17 +124,6 @@ export const projects = [
     featured: true,
   },
   {
-    title: "GED — ISO 9001 Quality System",
-    subtitle: { en: "PFE 2026", fr: "PFE 2026" },
-    description: {
-      en: "ISO 9001-compliant Electronic Document Management System for ACTIA Engineering Services. Features role-based validation workflows, real-time notifications, and AI-powered quality document analysis.",
-      fr: "Système de gestion électronique de documents conforme ISO 9001 pour ACTIA Engineering Services. Workflows de validation par rôle, notifications en temps réel et analyse IA de la qualité des documents.",
-    },
-    tags: ["Node.js", "Express.js", "React.js", "PostgreSQL", "Docker", "NLP"],
-    github: "https://github.com/HMotez/SMQ_GED",
-    featured: true,
-  },
-  {
     title: "TrueCare AI — Medical Reimbursements",
     subtitle: { en: "AI 2025", fr: "IA 2025" },
     description: {

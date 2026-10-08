@@ -76,7 +76,6 @@ built with React, Three.js and Framer Motion, in English and French, dark and li
 | Project | Stack | Links |
 |---|---|---|
 | **AI Medical Assistant** — AI triage: symptoms in free text (EN/FR) → calibrated top-5 conditions, urgency, specialist, verified-doctor review | FastAPI, React, scikit-learn, PostgreSQL, Docker | [Live demo](https://medai-hmotez.onrender.com) · [Code](https://github.com/HMotez/AI-Medical-Assistant) |
-| **GED — ISO 9001 Quality System** — document management for ACTIA Engineering Services (final-year internship) | Node.js, Express, React, PostgreSQL, Docker, NLP | Private (company project) |
 | **TrueCare AI** — medical reimbursement prediction and fraud detection | Python, Machine Learning, NLP | [Code](https://github.com/HMotez/MedClaimML) |
 | **Hotel Management System** — desktop app for staff, rooms and bookings | Java, JavaFX, MySQL | [Code](https://github.com/HMotez/HotelSystem) |
 | **University SOA System** — REST + SOAP services with JWT | Spring Boot, Java, Docker | [Code](https://github.com/HMotez/University-SOA) |
